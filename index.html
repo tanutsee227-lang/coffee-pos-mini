@@ -1,0 +1,2192 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Coffee POS Mini - ระบบร้านกาแฟสำหรับคุณแม่</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coffee POS">
+  <meta name="theme-color" content="#c25e0c">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap">
+  <style>
+    /* ==========================================================================
+   HIGH-CONTRAST ELDERLY & TABLET ERGONOMICS DESIGN SYSTEM
+   - คอนทราสต์สูงพิเศษระดับ WCAG AAA มองเห็นชัดแม้อยู่ใต้แสงสะท้อนหน้าร้าน
+   - ปุ่มขนาดใหญ่พิเศษ (Big Touch Targets) สัมผัสง่าย ไม่พลาดเป้า
+   ========================================================================== */
+    :root {
+      --bg: #edf1f7;
+      --card: #ffffff;
+      --card-subtle: #f8fafc;
+      --ink: #1a202c;
+      --ink-secondary: #4a5568;
+      --mute: #718096;
+      --acc: #c25e0c;
+      /* ส้มอิฐกาแฟ ชัดเจน */
+      --acc-hover: #9c4505;
+      --accT: #ffffff;
+      --ok: #15803d;
+      /* เขียวเสร็จแล้ว/รับเงิน */
+      --ok-bg: #dcfce7;
+      --warn: #c2410c;
+      /* ส้มกำลังชง/ค้างจ่าย */
+      --warn-bg: #ffedd5;
+      --danger: #dc2626;
+      --danger-bg: #fee2e2;
+      --hi: #ffffff;
+      --lo: #c7d2e0;
+      --border: #d2dae6;
+      --border-focus: #c25e0c;
+      --r: 18px;
+      --r-sm: 12px;
+      --shadow-card: 0 4px 14px rgba(30, 41, 59, 0.07), 0 1px 3px rgba(30, 41, 59, 0.05);
+      --shadow-pop: 0 12px 28px rgba(30, 41, 59, 0.18);
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #181b22;
+        --card: #222733;
+        --card-subtle: #2b3140;
+        --ink: #f8fafc;
+        --ink-secondary: #cbd5e1;
+        --mute: #94a3b8;
+        --acc: #f0903f;
+        --acc-hover: #f59e0b;
+        --accT: #1a1e24;
+        --ok: #4ade80;
+        --ok-bg: #14532d;
+        --warn: #fb923c;
+        --warn-bg: #7c2d12;
+        --danger: #f87171;
+        --danger-bg: #7f1d1d;
+        --hi: #2d3342;
+        --lo: #0f1217;
+        --border: #333c4d;
+        --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #181b22;
+      --card: #222733;
+      --card-subtle: #2b3140;
+      --ink: #f8fafc;
+      --ink-secondary: #cbd5e1;
+      --mute: #94a3b8;
+      --acc: #f0903f;
+      --acc-hover: #f59e0b;
+      --accT: #1a1e24;
+      --ok: #4ade80;
+      --ok-bg: #14532d;
+      --warn: #fb923c;
+      --warn-bg: #7c2d12;
+      --danger: #f87171;
+      --danger-bg: #7f1d1d;
+      --hi: #2d3342;
+      --lo: #0f1217;
+      --border: #333c4d;
+      --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Noto Sans Thai", system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+      /* ตัดอาการหน่วง 300ms บนแท็บเล็ต */
+    }
+
+    .num-font {
+      font-family: "Plus Jakarta Sans", "Noto Sans Thai", sans-serif;
+      font-feature-settings: "tnum" 1;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      border: 0;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 3px solid var(--acc);
+      outline-offset: 2px;
+    }
+
+    /* Card สไตล์ใหม่: คอนทราสต์ขาวเด่น ขอบชัด เงาสวย ไม่กลืนพื้นหลัง */
+    .raise {
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-card);
+      border-radius: var(--r);
+    }
+
+    h2 {
+      margin: 0 0 12px;
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    section {
+      padding: 18px;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .lab {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--ink-secondary);
+      width: 100%;
+      margin-bottom: -4px;
+    }
+
+    /* ==========================================================================
+   หน้าแรก (HOME)
+   ========================================================================== */
+    #vh {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      text-align: center;
+      padding: 24px;
+      position: relative;
+    }
+
+    #dt {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--ink-secondary);
+    }
+
+    #tm {
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: 4px;
+      line-height: 1.1;
+      color: var(--ink);
+    }
+
+    .bigs {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 36px;
+    }
+
+    .big {
+      min-height: 116px;
+      padding: 0 52px;
+      font-size: 30px;
+      font-weight: 800;
+      border-radius: 26px;
+      color: var(--accT);
+      background: var(--acc);
+      box-shadow: 0 8px 20px rgba(194, 94, 12, 0.35);
+      border: 3px solid transparent;
+      transition: transform 0.15s ease, background 0.15s ease;
+    }
+
+    .big:active {
+      transform: scale(0.97);
+    }
+
+    .big.sec {
+      background: var(--card);
+      color: var(--ink);
+      border: 3px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .gear {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      font-size: 28px;
+      border-radius: 50%;
+      background: var(--card);
+      border: 1.5px solid var(--border);
+      box-shadow: var(--shadow-card);
+      color: var(--ink-secondary);
+    }
+
+    /* ==========================================================================
+   แถบนำทางด้านบน (NAV BAR)
+   ========================================================================== */
+    #bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 12px 18px;
+      margin: 16px 20px;
+      max-width: 1320px;
+    }
+
+    .nav {
+      min-height: 54px;
+      padding: 0 24px;
+      border-radius: 14px;
+      font-weight: 800;
+      font-size: 17px;
+      color: var(--ink);
+      border: 2px solid var(--border);
+      background: var(--card);
+      transition: all 0.15s ease;
+    }
+
+    .nav[aria-pressed="true"] {
+      background: var(--acc);
+      color: var(--accT);
+      border-color: var(--acc);
+      box-shadow: 0 4px 12px rgba(194, 94, 12, 0.3);
+    }
+
+    #clk {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    /* ปุ่มตัวเลือก Chips - สไตล์ใหม่: สีทึบเด่นชัดเจนตอนเลือก (Solid Highlight) */
+    .chip {
+      min-height: 52px;
+      padding: 0 20px;
+      border-radius: 14px;
+      background: var(--card);
+      border: 2px solid var(--border);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 16px;
+      transition: all 0.15s ease;
+    }
+
+    .chip[aria-pressed="true"] {
+      background: var(--acc) !important;
+      color: #ffffff !important;
+      border-color: var(--acc) !important;
+      box-shadow: 0 4px 12px rgba(194, 94, 12, 0.35);
+      font-weight: 800;
+    }
+
+    .chip:active {
+      transform: scale(0.96);
+    }
+
+    .vr {
+      width: 2px;
+      align-self: stretch;
+      background: var(--border);
+      margin: 0 6px;
+    }
+
+    /* ==========================================================================
+   หน้าขาย (ORDER VIEW - 2 คอลัมน์แท็บเล็ต)
+   ========================================================================== */
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 20px;
+      padding: 0 20px 28px;
+      max-width: 1360px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 860px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ตารางเมนูสำหรับแท็บเล็ต: ปุ่มขนาดใหญ่ 125px+ แตะง่าย ไม่เบียด */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .item {
+      min-height: 114px;
+      padding: 12px 10px;
+      border-radius: var(--r);
+      background: var(--card);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-card);
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.12s ease, border-color 0.12s ease;
+    }
+
+    .item:active {
+      transform: scale(0.95);
+      border-color: var(--acc);
+    }
+
+    /* แถบสีนำสายตาตามหมวดหมู่ (Color-coded ribbons) ให้แม่กวาดตามองหาง่าย */
+    .item::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 5px;
+    }
+
+    .item[data-c="กาแฟ"]::before {
+      background: #8d5524;
+    }
+
+    .item[data-c="ชา"]::before {
+      background: #16a34a;
+    }
+
+    .item[data-c="นม/โกโก้"]::before {
+      background: #be185d;
+    }
+
+    .item[data-c="โซดา"]::before {
+      background: #0284c7;
+    }
+
+    .item span {
+      font-weight: 800;
+      font-size: 17px;
+      line-height: 1.3;
+      color: var(--ink);
+      margin-top: 3px;
+    }
+
+    .item em {
+      font-style: normal;
+      color: var(--acc);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .inp {
+      height: 52px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 0 16px;
+      font: inherit;
+      font-size: 16px;
+      color: var(--ink);
+      background: var(--card);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+      width: 160px;
+    }
+
+    .inp:focus {
+      border-color: var(--acc);
+      outline: none;
+    }
+
+    /* ==========================================================================
+   คอลัมน์รายการวันนี้ (ORDERS LIST)
+   ========================================================================== */
+    /* แถบสรุปยอดค้างจ่าย/รับเงินด้านบนแบบตัวเบ้อเริ่ม */
+    .summary-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+      align-items: center;
+    }
+
+    .badge-stat {
+      padding: 8px 14px;
+      border-radius: var(--r-sm);
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .badge-stat.owe {
+      background: var(--warn-bg);
+      color: var(--warn);
+      border: 1.5px solid rgba(194, 65, 12, 0.3);
+    }
+
+    .badge-stat.paid {
+      background: var(--ok-bg);
+      color: var(--ok);
+      border: 1.5px solid rgba(21, 128, 61, 0.3);
+    }
+
+    .badge-stat.count {
+      background: var(--card-subtle);
+      color: var(--ink-secondary);
+      border: 1.5px solid var(--border);
+    }
+
+    /* การ์ดออร์เดอร์ */
+    .order {
+      padding: 16px;
+      margin-bottom: 14px;
+      border: 2px solid var(--border);
+      border-radius: var(--r);
+      background: var(--card);
+      box-shadow: var(--shadow-card);
+      position: relative;
+      transition: all 0.15s ease;
+    }
+
+    .order.making {
+      border-left: 6px solid var(--warn);
+      background: #fffdfa;
+    }
+
+    .order.done {
+      border-left: 6px solid var(--ok);
+      opacity: 0.85;
+    }
+
+    .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .top b {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--ink);
+    }
+
+    .meta {
+      color: var(--ink-secondary);
+      font-size: 15px;
+      font-weight: 600;
+      margin-top: 3px;
+    }
+
+    .btns {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      align-items: center;
+    }
+
+    /* ปุ่มขนาดมาตรฐาน */
+    .sm {
+      min-height: 48px;
+      padding: 0 16px;
+      border-radius: var(--r-sm);
+      background: var(--card);
+      border: 2px solid var(--border);
+      color: var(--ink);
+      font-weight: 700;
+      font-size: 15px;
+      transition: all 0.12s ease;
+    }
+
+    .sm:active {
+      transform: scale(0.96);
+    }
+
+    .sm[aria-pressed="true"] {
+      background: var(--ok) !important;
+      color: #ffffff !important;
+      border-color: var(--ok) !important;
+      box-shadow: 0 3px 8px rgba(21, 128, 61, 0.3);
+      font-weight: 800;
+    }
+
+    .go {
+      background: var(--acc);
+      color: var(--accT);
+      border-color: var(--acc);
+      font-weight: 800;
+    }
+
+    .status-btn {
+      font-weight: 800;
+      padding: 0 18px;
+      border-radius: var(--r-sm);
+    }
+
+    .status-btn.making {
+      background: var(--warn);
+      color: #fff;
+      border-color: var(--warn);
+    }
+
+    .status-btn.done {
+      background: var(--ok);
+      color: #fff;
+      border-color: var(--ok);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 99px;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .tag.make {
+      background: var(--warn-bg);
+      color: var(--warn);
+    }
+
+    .tag.ready {
+      background: var(--ok-bg);
+      color: var(--ok);
+    }
+
+    .empty {
+      color: var(--mute);
+      padding: 32px 16px;
+      text-align: center;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    /* ปุ่มยกเลิก: แยกสีแดงชัดเจน มีระยะห่าง ไม่เสี่ยงมือลั่น */
+    .del {
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.3);
+      background: var(--danger-bg);
+      font-weight: 800;
+      margin-left: auto;
+    }
+
+    .del:hover,
+    .del:active {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* ==========================================================================
+   POPUP MODAL: เลือกออปชันด่วนสำหรับคุณแม่ (OPTION 2 CORE FEATURE)
+   แตะเมนู ➔ หน้าต่างเด้งขึ้นมาปุ่มใหญ่สะใจ แตะ 1-2 ทีเสร็จทันที
+   ========================================================================== */
+    #optModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 50;
+      animation: fadeIn 0.15s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .opt-box {
+      background: var(--card);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-pop);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 540px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: scale(0.95) translateY(12px);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .opt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding-bottom: 14px;
+      border-bottom: 2px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .opt-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .opt-price {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--acc);
+      margin-top: 4px;
+    }
+
+    .opt-group {
+      margin-bottom: 18px;
+    }
+
+    .opt-group-label {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--ink-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    /* ปุ่มเลือกความหวาน/น้ำแข็ง/นม ใน Modal: สูง 56px+ ตัวหนังสือโต */
+    .opt-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+
+    .opt-btn {
+      min-height: 58px;
+      padding: 8px 12px;
+      border-radius: var(--r-sm);
+      background: var(--card-subtle);
+      border: 2px solid var(--border);
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.12s ease;
+    }
+
+    .opt-btn.active {
+      background: var(--acc) !important;
+      color: #ffffff !important;
+      border-color: var(--acc) !important;
+      box-shadow: 0 4px 12px rgba(194, 94, 12, 0.35);
+      font-weight: 800;
+    }
+
+    .opt-btn:active {
+      transform: scale(0.96);
+    }
+
+    .opt-btn small {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .opt-footer {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 2px solid var(--border);
+    }
+
+    .btn-confirm-big {
+      min-height: 64px;
+      border-radius: 16px;
+      background: var(--ok);
+      color: #ffffff;
+      font-size: 21px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 16px rgba(21, 128, 61, 0.35);
+      transition: transform 0.12s ease;
+    }
+
+    .btn-confirm-big:active {
+      transform: scale(0.98);
+    }
+
+    /* ==========================================================================
+   หน้ายอดขาย (SALES REPORT)
+   ========================================================================== */
+    .rwrap {
+      max-width: 1060px;
+      margin: 0 auto;
+      padding: 0 20px 28px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+      margin: 8px 0 24px;
+    }
+
+    .kpi {
+      padding: 18px;
+      border-radius: var(--r);
+      background: var(--card);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-card);
+    }
+
+    .kpi small {
+      color: var(--mute);
+      display: block;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .kpi b {
+      font-size: 34px;
+      line-height: 1.25;
+      display: block;
+      margin: 4px 0;
+    }
+
+    .kpi span {
+      font-size: 14px;
+      color: var(--ink-secondary);
+      font-weight: 600;
+    }
+
+    .when {
+      font-weight: 800;
+      font-size: 20px;
+      min-width: 190px;
+      text-align: center;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: 1fr 240px;
+      gap: 24px;
+      align-items: center;
+    }
+
+    @media (max-width: 680px) {
+      .split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .leg {
+      display: grid;
+      grid-template-columns: 20px 1fr auto auto;
+      gap: 8px 14px;
+      align-items: center;
+    }
+
+    .sq {
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
+    }
+
+    .leg .n {
+      text-align: right;
+      font-weight: 800;
+      white-space: nowrap;
+      font-size: 16px;
+    }
+
+    .donut {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto;
+    }
+
+    .ring {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      -webkit-mask: radial-gradient(circle, transparent 54%, #000 55%);
+      mask: radial-gradient(circle, transparent 54%, #000 55%);
+    }
+
+    .mid {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    .mid small {
+      font-size: 14px;
+      color: var(--mute);
+      font-weight: 600;
+    }
+
+    .mrow {
+      display: grid;
+      grid-template-columns: 1fr 88px auto;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+
+    .mrow .inp {
+      width: 100%;
+    }
+
+    .mrow select.inp {
+      width: 120px;
+    }
+
+    #medit {
+      max-height: 250px;
+      overflow-y: auto;
+      padding: 6px;
+      margin-bottom: 8px;
+    }
+
+    /* MODALS: รูปภาพ & ตั้งค่า */
+    #pic,
+    #set {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 40;
+    }
+
+    #pic .raise,
+    #set .raise {
+      padding: 24px;
+      max-width: 520px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* แถบแจ้งเตือนสีแดง คอนทราสต์สูง สำหรับกรณีบันทึกข้อมูลไม่สำเร็จ */
+    .err-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: var(--danger, #dc2626);
+      color: #ffffff;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 19px;
+      font-weight: 700;
+      box-shadow: 0 4px 20px rgba(220, 38, 38, 0.45);
+      animation: slideDownBanner 0.25s ease-out;
+    }
+
+    @keyframes slideDownBanner {
+      from { transform: translateY(-100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- แถบแจ้งเตือนกรณีบันทึกข้อมูลไม่สำเร็จ (สีแดง คอนทราสต์สูง มองเห็นชัดเจน) -->
+  <div id="errBanner" class="err-banner" hidden role="alert" aria-live="assertive">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="font-size:24px;">⚠️</span>
+      <span id="errBannerText">บันทึกข้อมูลไม่สำเร็จ! กรุณาลองใหม่อีกครั้ง</span>
+    </div>
+    <button class="sm del" id="errBannerClose" style="min-height:44px; padding:0 18px; font-weight:800; background:#991b1b; color:#ffffff; border-color:#ffffff;">✕ ปิด</button>
+  </div>
+
+  <!-- ==========================================================================
+     1. หน้าแรก (HOME SCREEN)
+     ========================================================================== -->
+  <div id="vh">
+    <button class="gear" id="gear" aria-label="ตั้งค่าร้านและเมนู">⚙</button>
+    <div id="dt"></div>
+    <div id="tm" class="num-font"></div>
+    <div class="bigs">
+      <button class="big" id="hO">☕ เริ่มขายวันนี้</button>
+      <button class="big sec" id="hR">📊 ดูยอดขาย</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+     2. แถบนำทางด้านบน (NAV BAR)
+     ========================================================================== -->
+  <div id="bar" class="raise" hidden>
+    <div class="row" style="margin:0">
+      <button class="nav" id="nO" aria-pressed="false">☕ เริ่มขายวันนี้</button>
+      <button class="nav" id="nR" aria-pressed="false">📊 ดูยอดขาย</button>
+    </div>
+    <div class="row" style="margin:0">
+      <span id="clk" class="num-font"></span>
+      <button class="sm" id="home" aria-label="กลับหน้าแรก">🏠 หน้าแรก</button>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+     3. หน้าขาย (MAIN POS ORDER VIEW)
+     ========================================================================== -->
+  <main id="vo" hidden>
+    <!-- ฝั่งซ้าย: เมนูและตัวเลือก -->
+    <section class="raise" aria-label="เลือกเมนู">
+      <!-- แถบหมวดหมู่เมนู -->
+      <div class="row" id="cats" role="group" aria-label="หมวดหมู่"></div>
+
+      <div class="row">
+        <input type="text" class="inp" id="note" placeholder="โต๊ะ / โน้ต" aria-label="เลขโต๊ะหรือโน้ต">
+        <button class="sm del" id="undo" style="margin-left:0">↩ ลบออร์เดอร์ล่าสุด</button>
+      </div>
+
+      <!-- ตารางเมนูกดง่ายสำหรับแท็บเล็ต -->
+      <div class="grid" id="menu"></div>
+    </section>
+
+    <!-- ฝั่งขวา: รายการออร์เดอร์วันนี้ -->
+    <section class="raise" aria-label="รายการวันนี้">
+      <h2>รายการวันนี้</h2>
+
+      <!-- แถบสรุปยอดค้างจ่ายตัวโตๆ มองเห็นชัด ไม่ต้องคิดเลขในใจ -->
+      <div class="summary-bar" id="tsum"></div>
+
+      <!-- รายการออร์เดอร์ -->
+      <div id="orders"></div>
+
+      <div class="btns" style="margin-top:16px">
+        <button class="sm del" id="reset" style="margin-left:0">ล้างออร์เดอร์วันนี้</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==========================================================================
+     4. หน้าต่างเลือกออปชันด่วนสำหรับคุณแม่ (OPTION 2 MODAL)
+     ========================================================================== -->
+  <div id="optModal" hidden>
+    <div class="opt-box" role="dialog" aria-modal="true" aria-label="เลือกรายละเอียดเมนู">
+      <div class="opt-header">
+        <div>
+          <div class="opt-title" id="optModalName">อเมริกาโน่</div>
+          <div class="opt-price num-font" id="optModalPrice">฿40</div>
+        </div>
+        <button class="sm" id="optModalClose" style="width:48px;height:48px;border-radius:50%;font-size:20px;"
+          aria-label="ปิด">✕</button>
+      </div>
+
+      <!-- ความหวาน -->
+      <div class="opt-group">
+        <span class="opt-group-label">ระดับความหวาน:</span>
+        <div class="opt-buttons" id="optModalSweet">
+          <button class="opt-btn" data-v="0%">0%<small>ไม่หวาน</small></button>
+          <button class="opt-btn" data-v="25%">25%<small>หวานน้อย</small></button>
+          <button class="opt-btn active" data-v="50%">50%<small>หวานปกติ</small></button>
+          <button class="opt-btn" data-v="100%">100%<small>หวานมาก</small></button>
+        </div>
+      </div>
+
+      <!-- น้ำแข็ง -->
+      <div class="opt-group">
+        <span class="opt-group-label">น้ำแข็ง:</span>
+        <div class="opt-buttons" id="optModalIce">
+          <button class="opt-btn active" data-v="ใส่">ใส่น้ำแข็ง (เย็น)</button>
+          <button class="opt-btn" data-v="ไม่ใส่">ไม่ใส่ (ร้อน/อุ่น)</button>
+        </div>
+      </div>
+
+      <!-- นม (ซ่อนอัตโนมัติถ้าเป็นเมนูโซดา) -->
+      <div class="opt-group" id="optModalMilkGroup">
+        <span class="opt-group-label">ใส่นม:</span>
+        <div class="opt-buttons" id="optModalMilk">
+          <button class="opt-btn" data-v="ใส่">ใส่นม</button>
+          <button class="opt-btn active" data-v="ไม่ใส่">ไม่ใส่นม</button>
+        </div>
+      </div>
+
+      <!-- โน้ต/เลขโต๊ะ -->
+      <div class="opt-group">
+        <span class="opt-group-label">โต๊ะ / โน้ตเพิ่มเติม:</span>
+        <input type="text" class="inp" id="optModalNote" placeholder="เช่น โต๊ะ 2, หวานธรรมชาติ" style="width:100%">
+      </div>
+
+      <!-- ปุ่มยืนยันขนาดใหญ่สะใจ -->
+      <div class="opt-footer">
+        <button class="btn-confirm-big" id="optModalConfirm">
+          <span>✓ บันทึกลงบิลทันที</span>
+          <span class="num-font" id="optModalConfirmBtnPrice">฿40</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+     5. หน้ายอดขาย (SALES REPORT)
+     ========================================================================== -->
+  <div class="rwrap" id="vr" hidden>
+    <section class="raise" aria-label="ยอดขาย">
+      <div class="row" id="per" role="group" aria-label="ช่วงเวลา"></div>
+      <div class="row" id="dsel" style="justify-content:center"></div>
+
+      <div class="row" style="justify-content:center; margin:16px 0;">
+        <button class="sm go" id="shot" style="font-size:17px; min-height:54px; padding:0 24px;">
+          📷 สรุปเป็นรูป (ส่งให้ครอบครัว)
+        </button>
+      </div>
+
+      <div class="kpis" id="kpi"></div>
+
+      <h2>สรุปแยกตามเมนู</h2>
+      <div class="split">
+        <div class="leg" id="leg"></div>
+        <div class="donut" id="don"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ==========================================================================
+     6. รูปภาพสรุปยอดขาย (CANVAS DIALOG)
+     ========================================================================== -->
+  <div id="pic" hidden>
+    <div class="raise" role="dialog" aria-label="รูปสรุปยอดขาย">
+      <h2>รูปสรุปยอดขาย</h2>
+      <p class="meta" style="margin:0 0 12px">กดค้างที่รูปแล้วเลือก "บันทึกรูปภาพ" หรือแคปหน้าจอ แล้วส่งเข้า LINE
+        ให้ครอบครัวได้เลย</p>
+      <img id="pimg" alt="สรุปยอดขาย"
+        style="width:100%; border-radius:12px; display:block; border:1px solid var(--border);">
+      <div class="btns" style="margin-top:14px">
+        <button class="sm go" id="closePic" style="width:100%">ปิดหน้าต่าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+     7. หน้าต่างตั้งค่า (SETTINGS DIALOG)
+     ========================================================================== -->
+  <div id="set" hidden>
+    <div class="raise" role="dialog" aria-label="ตั้งค่า">
+      <h2>ตั้งค่าระบบ</h2>
+
+      <div class="lab" style="margin-bottom:6px">โหมดการสั่งสำหรับคุณแม่</div>
+      <div class="row" id="flowModeRow">
+        <button class="chip" id="btnFlowModal" aria-pressed="true">✨ แตะเมนูแล้วเลือกความหวาน (แนะนำ)</button>
+        <button class="chip" id="btnFlowDirect" aria-pressed="false">แตะเมนูแล้วลงบิลทันที</button>
+      </div>
+
+      <div class="lab" style="margin-bottom:6px">ธีมหน้าจอ</div>
+      <div class="row" id="theme"></div>
+
+      <div class="lab" style="margin-bottom:6px">เมนูและราคา (แก้แล้วบันทึกอัตโนมัติ)</div>
+      <div id="medit"></div>
+
+      <div class="mrow">
+        <input class="inp" id="ann" placeholder="ชื่อเมนูใหม่" aria-label="ชื่อเมนูใหม่">
+        <input class="inp" id="anp" type="number" inputmode="numeric" min="0" placeholder="ราคา" aria-label="ราคา">
+        <select class="inp" id="anc" aria-label="หมวด">
+          <option>กาแฟ</option>
+          <option>ชา</option>
+          <option>นม/โกโก้</option>
+          <option>โซดา</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <button class="sm go" id="aadd">+ เพิ่มเมนู</button>
+      </div>
+
+      <div class="lab" style="margin-bottom:6px">จัดการฐานข้อมูล (สำรอง/กู้คืน)</div>
+      <div class="row" style="flex-wrap:wrap; gap:10px;">
+        <button class="sm go" id="btnBackup" style="min-height:52px; font-size:16px;">💾 สำรองข้อมูล (JSON)</button>
+        <button class="sm del" id="btnRestore" style="min-height:52px; font-size:16px;">📥 นำเข้าข้อมูล</button>
+        <input type="file" id="fileRestoreInput" accept=".json,application/json" style="display:none;" aria-label="เลือกไฟล์สำรอง">
+      </div>
+      <div id="restoreStatus" class="meta" style="font-weight:700; margin-top:8px;" hidden></div>
+
+      <div class="lab" style="margin-bottom:6px">ข้อมูลตัวอย่าง (ไว้ทดสอบหน้ายอดขาย)</div>
+      <div class="row">
+        <button class="sm" id="demo">เติมข้อมูลย้อนหลัง</button>
+        <button class="sm" id="undemo">ล้างข้อมูลตัวอย่าง</button>
+      </div>
+
+      <div class="btns" style="margin-top:16px">
+        <button class="sm go" id="closeSet" style="width:100%">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+     8. JAVASCRIPT LOGIC
+     ========================================================================== -->
+  <script>
+    var MENU = [
+      { c: "กาแฟ", n: "อเมริกาโน่", p: 40 },
+      { c: "กาแฟ", n: "ลาเต้", p: 50 },
+      { c: "กาแฟ", n: "คาปูชิโน่", p: 50 },
+      { c: "กาแฟ", n: "เอสเปรสโซ่เย็น", p: 45 },
+      { c: "ชา", n: "ชาไทย", p: 40 },
+      { c: "ชา", n: "ชาเขียวนม", p: 45 },
+      { c: "ชา", n: "ชามะนาว", p: 35 },
+      { c: "นม/โกโก้", n: "โกโก้เย็น", p: 45 },
+      { c: "นม/โกโก้", n: "นมชมพู", p: 35 },
+      { c: "นม/โกโก้", n: "นมสดปั่น", p: 40 },
+      { c: "โซดา", n: "โซดามะนาว", p: 35 },
+      { c: "โซดา", n: "โซดาบ๊วย", p: 35 },
+      { c: "โซดา", n: "อิตาเลียนโซดา", p: 40 }
+    ];
+
+    var COL = ["#7cb342", "#ec7fa3", "#8d5524", "#4f9ddb", "#f5b041", "#9b7fd4", "#26a69a", "#e57373", "#b0a58a", "#6d8b9a", "#d4a017", "#a1887f", "#5c6bc0"];
+
+    try {
+      var sm = JSON.parse(localStorage.getItem("cpm_menu") || "null");
+      if (sm && sm.length) MENU = sm;
+    } catch (e) { }
+
+    var CAT4 = ["กาแฟ", "ชา", "นม/โกโก้", "โซดา"];
+    function cats() {
+      return ["ทั้งหมด"].concat(CAT4.filter(function (c) {
+        return MENU.some(function (m) { return m.c === c; });
+      }));
+    }
+    var CATS = cats();
+
+    var SW = ["0%", "25%", "50%", "100%"];
+    var YN = ["ใส่", "ไม่ใส่"];
+    var PAYL = { none: "ยังไม่จ่าย", cash: "💵 เงินสด", qr: "📱 โอนจ่าย" };
+
+    function $(i) { return document.getElementById(i); }
+    function pad(n) { return n < 10 ? "0" + n : "" + n; }
+    function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+    function today() { return ymd(new Date()); }
+    function fmt(n) { return n.toLocaleString("th-TH"); }
+    function esc(s) {
+      return s.replace(/[&<>"]/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c];
+      });
+    }
+
+    // ระบบเสียงเบาๆ ยืนยันการแตะบนแท็บเล็ต (Web Audio API)
+    var audioCtx = null;
+    function beep(freq, duration) {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
+        var osc = audioCtx.createOscillator();
+        var gain = audioCtx.createGain();
+        osc.frequency.setValueAtTime(freq || 680, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (duration || 0.05));
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + (duration || 0.05));
+      } catch (e) { }
+    }
+
+    var cat = "ทั้งหมด", sw = "50%", ic = "ใส่", ml = "ไม่ใส่", orders = [], seq = 1, per = "day", sel = today(), last = today();
+    var useModalFlow = true; // Option 2: เปิดโหมด Popup อัตโนมัติ
+
+    // โหลดการตั้งค่าโหมดสั่งซื้อ
+    try {
+      var prefFlow = localStorage.getItem("cpm_flow");
+      if (prefFlow !== null) useModalFlow = prefFlow === "modal";
+    } catch (e) { }
+
+    /* ---- ระบบแจ้งเตือนข้อผิดพลาดสีแดงสด ---- */
+    function showError(msg) {
+      beep(300, 0.2); // เสียงเตือนโทนต่ำ
+      var el = $("errBanner");
+      if (el) {
+        $("errBannerText").textContent = "⚠️ " + msg;
+        el.hidden = false;
+      }
+    }
+
+    $("errBannerClose").onclick = function () {
+      beep(500);
+      $("errBanner").hidden = true;
+    };
+
+    /* ==========================================================================
+       ระบบจัดเก็บข้อมูล INDEXEDDB (ขยายพื้นที่ระยะยาว รองรับหลายหมื่นออร์เดอร์)
+       ========================================================================== */
+    var DB_NAME = "CoffeePOS_DB";
+    var DB_VERSION = 1;
+    var idb = null;
+
+    function openDB() {
+      return new Promise(function (resolve, reject) {
+        if (idb) return resolve(idb);
+        if (!window.indexedDB) {
+          return reject(new Error("เบราว์เซอร์ไม่รองรับ IndexedDB"));
+        }
+        var req = window.indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = function (e) {
+          var d = e.target.result;
+          if (!d.objectStoreNames.contains("orders")) {
+            var os = d.createObjectStore("orders", { keyPath: "id" });
+            os.createIndex("d", "d", { unique: false });
+          }
+          if (!d.objectStoreNames.contains("meta")) {
+            d.createObjectStore("meta", { keyPath: "key" });
+          }
+        };
+        req.onsuccess = function (e) {
+          idb = e.target.result;
+          resolve(idb);
+        };
+        req.onerror = function (e) {
+          reject(e.target.error || new Error("เปิดฐานข้อมูล IndexedDB ล้มเหลว"));
+        };
+      });
+    }
+
+    // ฟังก์ชันบันทึกข้อมูลลง IndexedDB พร้อม Fallback และ Error Handler
+    function save() {
+      // 1. สำรองข้อมูลล่าสุด 200 รายการลง localStorage ป้องกันกรณีฉุกเฉิน
+      try {
+        localStorage.setItem("cpm", JSON.stringify({ o: orders.slice(0, 200), q: seq }));
+      } catch (e) { }
+
+      // 2. บันทึกข้อมูลทั้งหมดลง IndexedDB
+      openDB().then(function (d) {
+        var tx = d.transaction(["orders", "meta"], "readwrite");
+        var orderStore = tx.objectStore("orders");
+        var metaStore = tx.objectStore("meta");
+
+        orderStore.clear();
+        for (var i = 0; i < orders.length; i++) {
+          orderStore.put(orders[i]);
+        }
+        metaStore.put({ key: "seq", val: seq });
+
+        tx.onerror = function (e) {
+          var errDetail = e.target.error ? e.target.error.message : "พื้นที่จัดเก็บบนอุปกรณ์อาจเต็ม";
+          showError("บันทึกข้อมูลไม่สำเร็จ! (" + errDetail + ")");
+        };
+      }).catch(function (err) {
+        showError("บันทึกข้อมูลไม่สำเร็จ: " + (err.message || err));
+      });
+    }
+
+    // โหลดข้อมูลเริ่มต้นและย้ายข้อมูลจาก localStorage มา IndexedDB (ทำครั้งเดียว ไม่ให้ข้อมูลสูญหาย)
+    function initStorage(callback) {
+      openDB().then(function (d) {
+        var tx = d.transaction(["orders", "meta"], "readwrite");
+        var orderStore = tx.objectStore("orders");
+        var metaStore = tx.objectStore("meta");
+
+        var getMigrated = metaStore.get("migrated_from_ls");
+        getMigrated.onsuccess = function () {
+          var hasMigrated = !!getMigrated.result;
+          if (!hasMigrated) {
+            try {
+              var oldS = JSON.parse(localStorage.getItem("cpm") || "null");
+              if (oldS && Array.isArray(oldS.o) && oldS.o.length > 0) {
+                oldS.o.forEach(function (item) {
+                  orderStore.put(item);
+                });
+              }
+              var oldSeq = oldS && oldS.q ? oldS.q : 1;
+              metaStore.put({ key: "seq", val: oldSeq });
+              metaStore.put({ key: "migrated_from_ls", val: true, at: new Date().toISOString() });
+            } catch (err) { }
+          }
+        };
+
+        tx.oncomplete = function () {
+          var readTx = d.transaction(["orders", "meta"], "readonly");
+          var ordersReq = readTx.objectStore("orders").getAll();
+          var seqReq = readTx.objectStore("meta").get("seq");
+
+          readTx.oncomplete = function () {
+            if (ordersReq.result && ordersReq.result.length > 0) {
+              orders = ordersReq.result;
+              orders.sort(function (a, b) { return b.id - a.id; });
+            } else {
+              try {
+                var sFallback = JSON.parse(localStorage.getItem("cpm") || "null");
+                if (sFallback && sFallback.o) orders = sFallback.o;
+              } catch (e) { }
+            }
+
+            if (seqReq.result && seqReq.result.val) {
+              seq = seqReq.result.val;
+            } else if (orders.length > 0) {
+              var maxId = 0;
+              orders.forEach(function (o) { if (o.id > maxId) maxId = o.id; });
+              seq = Math.max(seq, maxId + 1);
+            }
+
+            orders.forEach(function (o) { if (!o.d) o.d = today(); });
+            if (callback) callback();
+          };
+
+          readTx.onerror = function () {
+            if (callback) callback();
+          };
+        };
+
+        tx.onerror = function (e) {
+          showError("เกิดข้อผิดพลาดในการเข้าถึงฐานข้อมูล");
+          if (callback) callback();
+        };
+      }).catch(function (err) {
+        showError("ไม่สามารถเปิดใช้งานฐานข้อมูล (" + (err.message || err) + ")");
+        // Fallback เดิม
+        try {
+          var s = JSON.parse(localStorage.getItem("cpm") || "null");
+          if (s) { orders = s.o || []; seq = s.q || 1; }
+        } catch (e) { }
+        orders.forEach(function (o) { if (!o.d) o.d = today(); });
+        if (callback) callback();
+      });
+    }
+
+    function todays() {
+      var t = today();
+      return orders.filter(function (o) { return o.d === t; });
+    }
+
+    /* ---- หน้า / เวลา ---- */
+    function show(v) {
+      beep(600);
+      $("vh").hidden = v !== "h";
+      $("bar").hidden = v === "h";
+      $("vo").hidden = v !== "o";
+      $("vr").hidden = v !== "r";
+      $("nO").setAttribute("aria-pressed", v === "o");
+      $("nR").setAttribute("aria-pressed", v === "r");
+      if (v === "r") drawReport();
+      window.scrollTo(0, 0);
+    }
+
+    function tick() {
+      var n = new Date();
+      var t = pad(n.getHours()) + " : " + pad(n.getMinutes());
+      $("dt").textContent = n.toLocaleDateString("th-TH", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      $("tm").textContent = t;
+      $("clk").textContent = t;
+      if (today() !== last) {
+        last = today();
+        render();
+      }
+    }
+
+    $("hR").onclick = $("nR").onclick = function () { show("r"); };
+    $("hO").onclick = $("nO").onclick = function () { show("o"); };
+    $("home").onclick = function () { show("h"); };
+
+    /* ---- ตั้งค่า ---- */
+    $("gear").onclick = function () {
+      beep(650);
+      drawEdit();
+      updateFlowModeButtons();
+      $("set").hidden = false;
+    };
+
+    $("closeSet").onclick = function () {
+      beep(500);
+      $("set").hidden = true;
+    };
+
+    function updateFlowModeButtons() {
+      $("btnFlowModal").setAttribute("aria-pressed", useModalFlow ? "true" : "false");
+      $("btnFlowDirect").setAttribute("aria-pressed", !useModalFlow ? "true" : "false");
+    }
+
+    $("btnFlowModal").onclick = function () {
+      useModalFlow = true;
+      localStorage.setItem("cpm_flow", "modal");
+      updateFlowModeButtons();
+      beep(700);
+    };
+
+    $("btnFlowDirect").onclick = function () {
+      useModalFlow = false;
+      localStorage.setItem("cpm_flow", "direct");
+      updateFlowModeButtons();
+      beep(700);
+    };
+
+    (function () {
+      var h = "";
+      [["auto", "อัตโนมัติ"], ["light", "สว่าง"], ["dark", "มืด"]].forEach(function (x) {
+        h += '<button class="chip" data-t="' + x[0] + '">' + x[1] + '</button>';
+      });
+      $("theme").innerHTML = h;
+    })();
+
+    $("theme").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      var r = document.documentElement;
+      if (b.dataset.t === "auto") r.removeAttribute("data-theme");
+      else r.setAttribute("data-theme", b.dataset.t);
+    };
+
+    $("demo").onclick = function () {
+      var now = new Date();
+      for (var k = 1; k <= 400; k++) {
+        var d = ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() - k)),
+          n = 6 + Math.floor(Math.random() * 13);
+        for (var j = 0; j < n; j++) {
+          var m = MENU[Math.floor(Math.random() * Math.random() * MENU.length)];
+          orders.push({
+            id: seq++, n: m.n, p: m.p, sw: "50%", ic: "ใส่", ml: "ไม่ใส่",
+            note: "", st: "ready", pay: Math.random() < 0.6 ? "cash" : "qr",
+            d: d, s: 1
+          });
+        }
+      }
+      save();
+      beep(880);
+      this.textContent = "เติมแล้ว ✓";
+    };
+
+    $("undemo").onclick = function () {
+      orders = orders.filter(function (o) { return !o.s; });
+      save();
+      render();
+      beep(550);
+      this.textContent = "ล้างแล้ว ✓";
+    };
+
+    /* ==========================================================================
+       ระบบสำรองข้อมูล และ นำเข้าข้อมูล (BACKUP & RESTORE JSON)
+       - สำรองเป็นไฟล์ JSON (ออร์เดอร์ + เมนูและราคา)
+       - นำเข้าต้องถามยืนยันด้วยการแตะสองครั้งก่อนเขียนทับ (ห้ามใช้ confirm / alert)
+       ========================================================================== */
+    function showRestoreStatus(msg, isErr) {
+      var el = $("restoreStatus");
+      if (!el) return;
+      el.textContent = msg;
+      el.style.color = isErr ? "var(--danger)" : "var(--ok)";
+      el.hidden = false;
+      setTimeout(function () { el.hidden = true; }, 6000);
+    }
+
+    $("btnBackup").onclick = function () {
+      beep(800);
+      try {
+        var backupData = {
+          app: "Coffee POS Mini",
+          version: 1,
+          exported_at: new Date().toISOString(),
+          date_str: today(),
+          orders: orders,
+          seq: seq,
+          menu: MENU
+        };
+        var jsonStr = JSON.stringify(backupData, null, 2);
+        var blob = new Blob([jsonStr], { type: "application/json" });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url;
+        a.download = "coffee-pos-backup-" + today() + ".json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showRestoreStatus("✓ สำรองข้อมูลเรียบร้อยแล้ว (ดาวน์โหลดไฟล์แล้ว)");
+      } catch (err) {
+        showError("สำรองข้อมูลไม่สำเร็จ: " + (err.message || err));
+      }
+    };
+
+    var restoreConfirming = false;
+    var restoreTimer = null;
+
+    $("btnRestore").onclick = function () {
+      if (!restoreConfirming) {
+        restoreConfirming = true;
+        beep(450);
+        this.textContent = "⚠️ แตะอีกครั้งเพื่อเลือกไฟล์เขียนทับ";
+        this.style.background = "var(--danger)";
+        this.style.color = "#ffffff";
+
+        clearTimeout(restoreTimer);
+        restoreTimer = setTimeout(function () {
+          restoreConfirming = false;
+          $("btnRestore").textContent = "📥 นำเข้าข้อมูล";
+          $("btnRestore").style.background = "";
+          $("btnRestore").style.color = "";
+        }, 5000);
+        return;
+      }
+
+      // แตะครั้งที่ 2 -> อนุญาตเปิดหน้าต่างเลือกไฟล์
+      restoreConfirming = false;
+      clearTimeout(restoreTimer);
+      this.textContent = "📥 นำเข้าข้อมูล";
+      this.style.background = "";
+      this.style.color = "";
+      beep(700);
+
+      $("fileRestoreInput").value = "";
+      $("fileRestoreInput").click();
+    };
+
+    $("fileRestoreInput").onchange = function (e) {
+      var file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      var reader = new FileReader();
+      reader.onload = function (evt) {
+        try {
+          var data = JSON.parse(evt.target.result);
+          if (!data || (!Array.isArray(data.orders) && !Array.isArray(data.o))) {
+            showError("ไฟล์ไม่ถูกต้อง ไม่พบรายการออร์เดอร์ของระบบ Coffee POS");
+            showRestoreStatus("✕ ไฟล์ไม่ถูกต้อง ไม่สามารถนำเข้าได้", true);
+            return;
+          }
+
+          var importedOrders = Array.isArray(data.orders) ? data.orders : data.o;
+          var importedSeq = data.seq || data.q || (importedOrders.length + 1);
+          var importedMenu = data.menu || data.m;
+
+          orders = importedOrders;
+          seq = importedSeq;
+          orders.forEach(function (o) { if (!o.d) o.d = today(); });
+
+          if (Array.isArray(importedMenu) && importedMenu.length > 0) {
+            MENU = importedMenu;
+            try { localStorage.setItem("cpm_menu", JSON.stringify(MENU)); } catch (err) { }
+            CATS = cats();
+            if (CATS.indexOf(cat) < 0) cat = "ทั้งหมด";
+            draw();
+            drawEdit();
+          }
+
+          save();
+          render();
+          if (!($("vr").hidden)) drawReport();
+          beep(880, 0.15);
+          showRestoreStatus("✓ นำเข้าข้อมูลสำเร็จ (" + orders.length + " ออร์เดอร์)");
+        } catch (err) {
+          showError("อ่านไฟล์ไม่สำเร็จ: " + (err.message || "ไฟล์ JSON ชำรุด"));
+          showRestoreStatus("✕ เกิดข้อผิดพลาดในการอ่านไฟล์", true);
+        }
+      };
+      reader.onerror = function () {
+        showError("ไม่สามารถเปิดอ่านไฟล์ที่เลือกได้");
+      };
+      reader.readAsText(file);
+    };
+
+    /* ---- แก้เมนู/ราคา ---- */
+    var askd = -1;
+    function apply() {
+      try { localStorage.setItem("cpm_menu", JSON.stringify(MENU)); } catch (e) { }
+      CATS = cats();
+      if (CATS.indexOf(cat) < 0) cat = "ทั้งหมด";
+      draw();
+    }
+
+    function drawEdit() {
+      var h = "";
+      MENU.forEach(function (m, i) {
+        h += '<div class="mrow">' +
+          '<input class="inp" data-f="n" data-i="' + i + '" value="' + esc(m.n) + '" aria-label="ชื่อเมนู">' +
+          '<input class="inp" data-f="p" data-i="' + i + '" type="number" inputmode="numeric" min="0" value="' + m.p + '" aria-label="ราคา">' +
+          '<button class="sm del" data-d="' + i + '">' + (askd === i ? "แตะอีกครั้งเพื่อลบ" : "ลบ") + '</button>' +
+          '</div>';
+      });
+      $("medit").innerHTML = h;
+    }
+
+    $("medit").onchange = function (e) {
+      var t = e.target, m = MENU[+t.dataset.i];
+      if (!m) return;
+      if (t.dataset.f === "p") {
+        m.p = Math.max(0, parseInt(t.value, 10) || 0);
+        t.value = m.p;
+      } else {
+        var v = t.value.trim();
+        if (v) m.n = v; else t.value = m.n;
+      }
+      apply();
+    };
+
+    $("medit").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      var i = +b.dataset.d;
+      if (askd !== i) {
+        askd = i;
+        drawEdit();
+        return;
+      }
+      askd = -1;
+      MENU.splice(i, 1);
+      apply();
+      drawEdit();
+    };
+
+    $("aadd").onclick = function () {
+      var n = $("ann").value.trim(), p = parseInt($("anp").value, 10);
+      if (!n || isNaN(p) || p < 0) { $("ann").focus(); return; }
+      MENU.push({ c: $("anc").value, n: n, p: p });
+      $("ann").value = "";
+      $("anp").value = "";
+      apply();
+      drawEdit();
+      beep(800);
+    };
+
+    /* ---- หน้าขาย & เมนู ---- */
+    function chips(id, list, cur, set) {
+      var h = "";
+      list.forEach(function (x) {
+        h += '<button class="chip" aria-pressed="' + (x === cur) + '" data-v="' + x + '">' + x + '</button>';
+      });
+      var el = $(id);
+      el.innerHTML = h;
+      el.onclick = function (e) {
+        var b = e.target.closest("button");
+        if (b) {
+          beep(650);
+          set(b.dataset.v);
+          draw();
+        }
+      };
+    }
+
+    function drawMenu() {
+      var h = "";
+      MENU.forEach(function (m, i) {
+        if (cat === "ทั้งหมด" || m.c === cat) {
+          h += '<button class="item" data-i="' + i + '" data-c="' + m.c + '">' +
+            '<span>' + m.n + '</span>' +
+            '<em>฿' + m.p + '</em>' +
+            '</button>';
+        }
+      });
+      $("menu").innerHTML = h;
+    }
+
+    /* ==========================================================================
+       OPTION 2: POPUP SELECTION LOGIC
+       เมื่อแตะเมนู จะเปิด Modal ขนาดใหญ่ให้จิ้มเลือกความหวาน/ใส่นม
+       ========================================================================== */
+    var activeModalItem = null;
+    var modalSweet = "50%";
+    var modalIce = "ใส่";
+    var modalMilk = "ไม่ใส่";
+
+    $("menu").onclick = function (e) {
+      var b = e.target.closest(".item");
+      if (!b) return;
+      var m = MENU[b.dataset.i];
+      if (!m) return;
+
+      beep(700);
+
+      // ถ้าผู้ใช้เลือกโหมด Direct (ปิด Modal ในการตั้งค่า)
+      if (!useModalFlow) {
+        addOrder(m.n, m.p, sw, ic, ml, $("note").value.trim());
+        return;
+      }
+
+      // เปิด Option 2 Modal
+      openOptModal(m);
+    };
+
+    function openOptModal(m) {
+      activeModalItem = m;
+      modalSweet = "50%"; // ค่าเริ่มต้นยอดนิยม 50% ทุกครั้ง เพื่อไม่ให้ค่าคนเก่าค้าง
+      modalIce = "ใส่";
+      modalMilk = (m.c === "กาแฟ" && (m.n.includes("ลาเต้") || m.n.includes("คาปูชิโน่"))) || m.c === "นม/โกโก้" ? "ใส่" : "ไม่ใส่";
+
+      $("optModalName").textContent = m.n;
+      $("optModalPrice").textContent = "฿" + m.p;
+      $("optModalConfirmBtnPrice").textContent = "฿" + m.p;
+      $("optModalNote").value = $("note").value.trim();
+
+      // ปรับการซ่อนแสดงหมวดนม (ถ้าเป็นโซดา ไม่ต้องใส่นม)
+      $("optModalMilkGroup").style.display = m.c === "โซดา" ? "none" : "block";
+
+      renderModalButtons();
+      $("optModal").hidden = false;
+    }
+
+    function renderModalButtons() {
+      // ความหวาน
+      document.querySelectorAll("#optModalSweet .opt-btn").forEach(function (btn) {
+        btn.classList.toggle("active", btn.dataset.v === modalSweet);
+      });
+      // น้ำแข็ง
+      document.querySelectorAll("#optModalIce .opt-btn").forEach(function (btn) {
+        btn.classList.toggle("active", btn.dataset.v === modalIce);
+      });
+      // นม
+      document.querySelectorAll("#optModalMilk .opt-btn").forEach(function (btn) {
+        btn.classList.toggle("active", btn.dataset.v === modalMilk);
+      });
+    }
+
+    $("optModalSweet").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      modalSweet = b.dataset.v;
+      renderModalButtons();
+    };
+
+    $("optModalIce").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      modalIce = b.dataset.v;
+      renderModalButtons();
+    };
+
+    $("optModalMilk").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      modalMilk = b.dataset.v;
+      renderModalButtons();
+    };
+
+    $("optModalClose").onclick = function () {
+      beep(500);
+      $("optModal").hidden = true;
+    };
+
+    $("optModalConfirm").onclick = function () {
+      if (!activeModalItem) return;
+      beep(880, 0.08);
+      var noteVal = $("optModalNote").value.trim();
+      addOrder(activeModalItem.n, activeModalItem.p, modalSweet, modalIce, modalMilk, noteVal);
+      $("optModal").hidden = true;
+      $("note").value = ""; // ล้างโน้ตหลักหลังบันทึก
+    };
+
+    function addOrder(name, price, sweetness, iceChoice, milkChoice, noteText) {
+      orders.unshift({
+        id: seq++,
+        n: name,
+        p: price,
+        sw: sweetness,
+        ic: iceChoice,
+        ml: milkChoice,
+        note: noteText,
+        st: "make",
+        pay: "none",
+        d: today()
+      });
+      save();
+      render();
+    }
+
+    /* การจัดการการ์ดออร์เดอร์ (ชงเสร็จ, จ่ายเงิน, ยกเลิก) */
+    $("orders").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      var o = orders.filter(function (x) { return x.id == b.dataset.id; })[0];
+      if (!o) return;
+
+      var a = b.dataset.a;
+      var was = o.ask;
+      orders.forEach(function (x) { x.ask = false; });
+
+      if (a === "st") {
+        beep(750);
+        o.st = o.st === "make" ? "ready" : "make";
+      } else if (a === "del") {
+        beep(450);
+        if (!was) {
+          o.ask = true;
+          render();
+          return;
+        }
+        orders = orders.filter(function (x) { return x !== o; });
+      } else if (a === "pay") {
+        beep(820);
+        o.pay = b.dataset.pay;
+      }
+      save();
+      render();
+    };
+
+    var rs = false;
+    $("reset").onclick = function () {
+      if (!rs) {
+        rs = true;
+        this.textContent = "แตะอีกครั้งเพื่อยืนยันล้างทั้งหมด";
+        beep(450);
+        return;
+      }
+      rs = false;
+      this.textContent = "ล้างออร์เดอร์วันนี้";
+      var t = today();
+      orders = orders.filter(function (o) { return o.d !== t; });
+      save();
+      render();
+      beep(600);
+    };
+
+    $("undo").onclick = function () {
+      var t = today(), i = orders.findIndex(function (o) { return o.d === t; });
+      if (i > -1) {
+        orders.splice(i, 1);
+        save();
+        render();
+        beep(500);
+      }
+    };
+
+    function opt(v, w) {
+      return v === "ใส่" ? "ใส่" + w : v === "ไม่ใส่" ? "ไม่ใส่" + w : w + " " + v;
+    }
+
+    /* วาดรายการออร์เดอร์วันนี้ */
+    function render() {
+      var td = todays(), h = "";
+      td.forEach(function (o) {
+        var isReady = o.st === "ready";
+        var statusClass = isReady ? "done" : "making";
+        var statusText = isReady ? "✓ เสร็จแล้ว" : "⏳ กำลังชง";
+
+        h += '<article class="order ' + statusClass + '">' +
+          '<div class="top">' +
+          '<div>' +
+          '<b>#' + o.id + ' ' + o.n + '</b>' +
+          '<div class="meta">หวาน ' + o.sw + ' · ' + opt(o.ic, "น้ำแข็ง") + (o.ml ? ' · ' + opt(o.ml, "นม") : '') + (o.note ? ' · <strong style="color:var(--acc)">' + esc(o.note) + '</strong>' : '') + '</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+          '<b class="num-font" style="font-size:22px; color:var(--acc);">฿' + o.p + '</b><br>' +
+          '<span class="tag ' + o.st + '">' + (isReady ? "เสร็จแล้ว" : "กำลังชง") + '</span>' +
+          '</div>' +
+          '</div>' +
+
+          '<div class="btns">' +
+          '<button class="sm status-btn ' + statusClass + '" data-a="st" data-id="' + o.id + '">' +
+          (isReady ? "✓ เสร็จแล้ว (แตะเพื่อย้อน)" : "⏳ กำลังชง (แตะเมื่อเสร็จ)") +
+          '</button>';
+
+        ["none", "cash", "qr"].forEach(function (k) {
+          h += '<button class="sm" data-a="pay" data-pay="' + k + '" data-id="' + o.id + '" aria-pressed="' + (o.pay === k) + '">' +
+            PAYL[k] +
+            '</button>';
+        });
+
+        // ปุ่มยกเลิกแยกฝั่งขวาสุด สีแดง ปลอดภัยจากการเผลอกดโดน
+        h += '<button class="sm del" data-a="del" data-id="' + o.id + '">' +
+          (o.ask ? 'แตะอีกครั้งเพื่อลบ' : '✕ ยกเลิก') +
+          '</button>' +
+          '</div></article>';
+      });
+
+      $("orders").innerHTML = h || '<div class="empty">ยังไม่มีออร์เดอร์วันนี้ แตะเมนูทางซ้ายเพื่อเริ่มรับออร์เดอร์ได้เลย</div>';
+
+      var paid = 0, owe = 0;
+      td.forEach(function (o) {
+        if (o.pay === "none") owe += o.p;
+        else paid += o.p;
+      });
+
+      // แถบสรุปยอดตัวโตๆ อ่านง่าย
+      $("tsum").innerHTML =
+        '<div class="badge-stat owe num-font">ค้างจ่าย: ฿' + fmt(owe) + '</div>' +
+        '<div class="badge-stat paid num-font">รับเงินแล้ว: ฿' + fmt(paid) + '</div>' +
+        '<div class="badge-stat count num-font">ทั้งหมด: ' + td.length + ' แก้ว</div>';
+    }
+
+    function draw() {
+      chips("cats", CATS, cat, function (v) { cat = v; });
+      drawMenu();
+    }
+
+    /* ==========================================================================
+       หน้ายอดขาย (REPORT)
+       ========================================================================== */
+    var PERS = [["day", "รายวัน"], ["month", "รายเดือน"], ["year", "รายปี"]];
+    function parts() { return sel.split("-").map(Number); }
+
+    function label() {
+      var p = parts(), d = new Date(p[0], p[1] - 1, p[2]);
+      if (per === "day") return d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric" });
+      if (per === "month") return d.toLocaleDateString("th-TH", { month: "long", year: "numeric" });
+      return "ปี " + (p[0] + 543);
+    }
+
+    function step(k) {
+      var p = parts(), d;
+      if (per === "day") d = new Date(p[0], p[1] - 1, p[2] + k);
+      else if (per === "month") d = new Date(p[0], p[1] - 1 + k, 1);
+      else d = new Date(p[0] + k, 0, 1);
+      if (ymd(d) > today()) return;
+      sel = ymd(d);
+      drawReport();
+    }
+
+    function inRange(o) {
+      var n = per === "day" ? 10 : per === "month" ? 7 : 4;
+      return o.d.slice(0, n) === sel.slice(0, n);
+    }
+
+    function drawReport() {
+      var h = "";
+      PERS.forEach(function (x) {
+        h += '<button class="chip" data-per="' + x[0] + '" aria-pressed="' + (per === x[0]) + '">' + x[1] + '</button>';
+      });
+      $("per").innerHTML = h;
+
+      var p = parts(), inp;
+      if (per === "day") {
+        inp = '<input class="inp" type="date" id="pick" value="' + sel + '" max="' + today() + '" aria-label="เลือกวันที่">';
+      } else if (per === "month") {
+        inp = '<input class="inp" type="month" id="pick" value="' + sel.slice(0, 7) + '" max="' + today().slice(0, 7) + '" aria-label="เลือกเดือน">';
+      } else {
+        var y = new Date().getFullYear();
+        inp = '<select class="inp" id="pick" aria-label="เลือกปี">';
+        for (var i = 0; i < 8; i++) {
+          inp += '<option value="' + (y - i) + '"' + (y - i === p[0] ? ' selected' : '') + '>' + (y - i + 543) + '</option>';
+        }
+        inp += '</select>';
+      }
+
+      $("dsel").innerHTML =
+        '<button class="sm" data-k="-1" aria-label="ย้อนไปก่อนหน้า">◀</button>' +
+        '<span class="when">' + label() + '</span>' +
+        '<button class="sm" data-k="1" aria-label="ไปถัดไป">▶</button>' +
+        inp +
+        '<button class="sm go" data-k="0">วันนี้</button>';
+
+      var list = orders.filter(inRange), total = 0, cash = 0, qr = 0, by = {};
+      list.forEach(function (o) {
+        total += o.p;
+        if (o.pay === "cash") cash += o.p;
+        else if (o.pay === "qr") qr += o.p;
+        var r = by[o.n] || (by[o.n] = { c: 0, s: 0 });
+        r.c++;
+        r.s += o.p;
+      });
+
+      var names = Object.keys(by).sort(function (a, b) { return by[b].c - by[a].c; }),
+        top = names[0],
+        owe = total - cash - qr;
+
+      $("kpi").innerHTML =
+        '<div class="kpi"><small>ยอดขายรวม</small><b class="num-font" style="color:var(--ok)">฿' + fmt(total) + '</b><span>เงินสด ฿' + fmt(cash) + ' · โอนจ่าย ฿' + fmt(qr) + (owe > 0 ? ' · ค้างจ่าย ฿' + fmt(owe) : '') + '</span></div>' +
+        '<div class="kpi"><small>จำนวนออร์เดอร์ทั้งหมด</small><b class="num-font">' + fmt(list.length) + '</b><span>แก้ว</span></div>' +
+        '<div class="kpi"><small>เมนูขายดีที่สุด</small><b style="font-size:24px">' + (top || "-") + '</b><span>' + (top ? by[top].c + " แก้ว" : "ยังไม่มีข้อมูล") + '</span></div>';
+
+      rep = { label: label(), total: total, cash: cash, qr: qr, owe: owe, count: list.length, top: top, names: names, by: by };
+
+      var t = "", g = [], acc = 0;
+      names.forEach(function (k, i) {
+        var c = COL[i % COL.length],
+          a = acc / list.length * 100,
+          b = (acc + by[k].c) / list.length * 100;
+        acc += by[k].c;
+        g.push(c + " " + a + "% " + b + "%");
+        t += '<span class="sq" style="background:' + c + '"></span>' +
+          '<span>' + k + '</span>' +
+          '<span class="n num-font">' + fmt(by[k].c) + ' แก้ว</span>' +
+          '<span class="n num-font">฿' + fmt(by[k].s) + '</span>';
+      });
+
+      $("leg").innerHTML = t || '<div class="empty" style="grid-column:1/-1">ไม่มีออร์เดอร์ในช่วงนี้ ลองกด ◀ ย้อนไปช่วงก่อนหน้า (หรือเติมข้อมูลตัวอย่างในตั้งค่า)</div>';
+      $("don").innerHTML = names.length ?
+        '<div class="ring" style="background:conic-gradient(' + g.join(",") + ')"></div><div class="mid num-font">' + fmt(list.length) + '<small>แก้ว</small></div>' : '';
+    }
+
+    $("per").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (b) {
+        beep(650);
+        per = b.dataset.per;
+        drawReport();
+      }
+    };
+
+    $("dsel").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      var k = +b.dataset.k;
+      if (k === 0) { sel = today(); drawReport(); }
+      else step(k);
+    };
+
+    $("dsel").onchange = function (e) {
+      var v = e.target.value;
+      if (!v) return;
+      if (per === "month") v += "-01";
+      else if (per === "year") v += "-01-01";
+      if (v > today()) return;
+      sel = v;
+      drawReport();
+    };
+
+    /* ==========================================================================
+       สรุปเป็นรูปส่ง LINE ให้ครอบครัว (CANVAS)
+       ========================================================================== */
+    var rep = null;
+    function rr(c, x, y, w, h, r) {
+      c.beginPath();
+      c.moveTo(x + r, y);
+      c.arcTo(x + w, y, x + w, y + h, r);
+      c.arcTo(x + w, y + h, x, y + h, r);
+      c.arcTo(x, y + h, x, y, r);
+      c.arcTo(x, y, x + w, y, r);
+      c.closePath();
+    }
+
+    function paint() {
+      var R = rep,
+        F = "'Noto Sans Thai',sans-serif",
+        n = Math.min(R.names.length, 8),
+        more = R.names.length - n,
+        W = 1080,
+        H = 880 + n * 80,
+        cv = document.createElement("canvas");
+
+      cv.width = W;
+      cv.height = H;
+      var c = cv.getContext("2d");
+
+      function T(s, x, y, sz, w, col, al) {
+        c.font = w + " " + sz + "px " + F;
+        c.fillStyle = col;
+        c.textAlign = al || "left";
+        c.fillText(s, x, y);
+      }
+
+      // พื้นหลัง Canvas นุ่มนวล ดูพรีเมียม
+      c.fillStyle = "#edf1f7";
+      c.fillRect(0, 0, W, H);
+
+      T("Coffee POS Mini", 60, 95, 46, 800, "#c25e0c");
+      T("สรุปยอดขาย " + R.label, 60, 150, 34, 600, "#64748b");
+
+      // กล่องยอดรวม
+      rr(c, 60, 190, 960, 360, 28);
+      c.fillStyle = "#ffffff";
+      c.fill();
+      c.strokeStyle = "#cbd5e1";
+      c.lineWidth = 2;
+      c.stroke();
+
+      T("ยอดขายรวม", 100, 255, 32, 600, "#64748b");
+      T("฿" + fmt(R.total), 100, 390, 126, 800, "#15803d");
+      T("เงินสด ฿" + fmt(R.cash) + "  ·  โอนจ่าย ฿" + fmt(R.qr), 100, 455, 34, 600, "#1e293b");
+
+      if (R.owe > 0) {
+        T("ค้างจ่าย ฿" + fmt(R.owe), 100, 505, 32, 700, "#c2410c");
+      }
+
+      T("จำนวน " + fmt(R.count) + " แก้ว", 60, 625, 40, 800, "#1e293b");
+      T(R.top ? "ขายดีที่สุด: " + R.top + " (" + R.by[R.top].c + " แก้ว)" : "ยังไม่มีออร์เดอร์", 60, 680, 34, 600, "#64748b");
+      T("สรุปแยกตามเมนู", 60, 760, 40, 800, "#1e293b");
+
+      for (var i = 0; i < n; i++) {
+        var k = R.names[i], y = 830 + i * 80;
+        c.fillStyle = COL[i % COL.length];
+        rr(c, 60, y - 30, 34, 34, 8);
+        c.fill();
+        T(k, 115, y, 36, 600, "#1e293b");
+        T(fmt(R.by[k].c) + " แก้ว", 700, y, 34, 600, "#64748b", "right");
+        T("฿" + fmt(R.by[k].s), 1020, y, 36, 800, "#1e293b", "right");
+      }
+
+      if (more > 0) {
+        T("และอีก " + more + " เมนู", 115, 830 + n * 80, 30, 400, "#64748b");
+      }
+
+      $("pimg").src = cv.toDataURL("image/png");
+      $("pic").hidden = false;
+    }
+
+    $("shot").onclick = function () {
+      if (!rep) return;
+      beep(750);
+      var f = document.fonts && document.fonts.load ?
+        Promise.all([
+          document.fonts.load("800 40px 'Noto Sans Thai'"),
+          document.fonts.load("600 40px 'Noto Sans Thai'")
+        ]) : Promise.resolve();
+      f.then(paint, paint);
+    };
+
+    $("closePic").onclick = function () {
+      beep(500);
+      $("pic").hidden = true;
+    };
+
+    // เริ่มต้นระบบ
+    draw();
+    tick();
+    setInterval(tick, 15000);
+    initStorage(function () {
+      render();
+    });
+  </script>
+</body>
+
+</html>
