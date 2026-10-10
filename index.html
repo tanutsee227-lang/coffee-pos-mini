@@ -42,6 +42,7 @@
       --lo: #c7d2e0;
       --border: #d2dae6;
       --border-focus: #c25e0c;
+      --order-making-bg: #fffdfa;
       --r: 18px;
       --r-sm: 12px;
       --shadow-card: 0 4px 14px rgba(30, 41, 59, 0.07), 0 1px 3px rgba(30, 41, 59, 0.05);
@@ -71,6 +72,7 @@
         --hi: #2d3342;
         --lo: #0f1217;
         --border: #333c4d;
+        --order-making-bg: #2c2a2b;
         --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
       }
     }
@@ -94,6 +96,7 @@
       --hi: #2d3342;
       --lo: #0f1217;
       --border: #333c4d;
+      --order-making-bg: #2c2a2b;
       --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.35);
     }
 
@@ -476,7 +479,7 @@
 
     .order.making {
       border-left: 6px solid var(--warn);
-      background: #fffdfa;
+      background: var(--order-making-bg);
     }
 
     .order.done {
@@ -879,7 +882,7 @@
 
     .mrow {
       display: grid;
-      grid-template-columns: 1fr 88px auto;
+      grid-template-columns: 52px 1fr 88px auto;
       gap: 10px;
       margin-bottom: 10px;
       align-items: center;
@@ -891,6 +894,77 @@
 
     .mrow select.inp {
       width: 120px;
+    }
+
+    /* ปุ่มสีของเมนู + หน้าต่างเลือกสี 64 สี */
+    .cdot {
+      width: 48px;
+      height: 48px;
+      min-height: 48px;
+      padding: 0;
+      border-radius: 12px;
+      border: 3px solid var(--border);
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+    }
+
+    .cdot:active {
+      transform: scale(0.94);
+    }
+
+    #colorModal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 60;
+    }
+
+    .cbox {
+      background: var(--card);
+      border: 2px solid var(--border);
+      box-shadow: var(--shadow-pop);
+      border-radius: 24px;
+      padding: 20px;
+      max-width: 440px;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .cgrid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 6px;
+      margin: 14px 0;
+    }
+
+    .csw {
+      aspect-ratio: 1;
+      min-height: 38px;
+      padding: 0;
+      border-radius: 10px;
+      border: 2px solid rgba(0, 0, 0, 0.12);
+      position: relative;
+    }
+
+    .csw.sel {
+      outline: 4px solid var(--ink);
+      outline-offset: 1px;
+    }
+
+    .csw.used::after {
+      content: "";
+      position: absolute;
+      right: 3px;
+      bottom: 3px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #1a202c;
     }
 
     #medit {
@@ -1142,6 +1216,7 @@
       <div id="medit"></div>
 
       <div class="mrow">
+        <button class="cdot" id="acol" aria-label="เลือกสีในแผนภูมิของเมนูใหม่"></button>
         <input class="inp" id="ann" placeholder="ชื่อเมนูใหม่" aria-label="ชื่อเมนูใหม่">
         <input class="inp" id="anp" type="number" inputmode="numeric" min="0" placeholder="ราคา" aria-label="ราคา">
         <select class="inp" id="anc" aria-label="หมวด">
@@ -1176,6 +1251,23 @@
     </div>
   </div>
 
+  <!-- หน้าต่างเลือกสีเมนูสำหรับแผนภูมิ (64 สี) -->
+  <div id="colorModal" hidden>
+    <div class="cbox" role="dialog" aria-label="เลือกสีเมนู">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span id="cprev" style="width:44px; height:44px; border-radius:12px; border:3px solid var(--border); flex:none;"></span>
+        <div class="opt-title" id="ctitle" style="font-size:20px;">เลือกสีในแผนภูมิ</div>
+      </div>
+      <div class="cgrid" id="cgrid"></div>
+      <div class="meta" id="cwarn" style="color:var(--warn); font-weight:800; margin:0 0 10px;" hidden></div>
+      <div class="meta" style="margin:0 0 12px; font-size:14px;">จุดขาวเล็ก ๆ มุมสี = มีเมนูอื่นใช้สีนี้อยู่แล้ว</div>
+      <div class="btns" style="margin-top:0;">
+        <button class="sm go" id="cOk" style="flex:1; min-height:56px; font-size:18px;">✓ ใช้สีนี้</button>
+        <button class="sm" id="cCancel" style="min-height:56px; font-size:18px;">ยกเลิก</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==========================================================================
      8. JAVASCRIPT LOGIC
      ========================================================================== -->
@@ -1202,6 +1294,60 @@
       var sm = JSON.parse(localStorage.getItem("cpm_menu") || "null");
       if (sm && sm.length) MENU = sm;
     } catch (e) { }
+
+    /* ---- สีเมนูในแผนภูมิ: พาเลต 64 สี (แถวบน = โทนเทา/น้ำตาล, อีก 7 แถว = 8 สี x 7 ความเข้ม) ---- */
+    var PALETTE = (function () {
+      function h2x(h, s, l) {
+        s /= 100; l /= 100;
+        var a = s * Math.min(l, 1 - l);
+        function f(n) {
+          var k = (n + h / 30) % 12;
+          var c = l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+          var x = Math.round(255 * c).toString(16);
+          return x.length < 2 ? "0" + x : x;
+        }
+        return "#" + f(0) + f(8) + f(4);
+      }
+      var out = ["#4e342e", "#8d5524", "#a1887f", "#c9b79c", "#78909c", "#546e7a", "#9e9e9e", "#d6d6d6"];
+      var tiers = [34, 42, 50, 58, 66, 74, 82], hues = [350, 25, 48, 100, 165, 205, 265, 320];
+      tiers.forEach(function (l) { hues.forEach(function (h) { out.push(h2x(h, 72, l)); }); });
+      return out;
+    })();
+
+    // ลำดับสีอัตโนมัติสำหรับเมนูที่ยังไม่เคยเลือกสี: เริ่มจากสีสดกลาง ๆ ให้ต่างกันก่อน
+    var DEF_ORDER = (function () {
+      var o = [];
+      [3, 4, 2, 5, 1, 6, 0].forEach(function (t) {
+        for (var h = 0; h < 8; h++) o.push(PALETTE[8 + t * 8 + h]);
+      });
+      for (var i = 0; i < 8; i++) o.push(PALETTE[i]);
+      return o;
+    })();
+
+    function validColor(k) { return typeof k === "string" && /^#[0-9a-fA-F]{6}$/.test(k); }
+    function usedColors() {
+      var u = {};
+      MENU.forEach(function (m) { if (validColor(m.k)) u[m.k.toLowerCase()] = true; });
+      return u;
+    }
+    function nextDefaultColor() {
+      var u = usedColors();
+      for (var i = 0; i < DEF_ORDER.length; i++) { if (!u[DEF_ORDER[i]]) return DEF_ORDER[i]; }
+      return DEF_ORDER[0];
+    }
+    // เติมสีให้เมนูที่ยังไม่มีสี (เมนูเดิม/ไฟล์สำรองเก่า) โดยไม่แตะข้อมูลอื่น
+    function ensureColors() {
+      MENU.forEach(function (m) { if (!validColor(m.k)) m.k = nextDefaultColor(); });
+    }
+    // หาสีของเมนูจากชื่อ ถ้าไม่เจอ (เช่นเมนูถูกลบ/เปลี่ยนชื่อไปแล้ว) คืน null เพื่อให้ใช้สีอัตโนมัติเดิม
+    function menuColor(name) {
+      for (var i = 0; i < MENU.length; i++) {
+        if (MENU[i].n === name && validColor(MENU[i].k)) return MENU[i].k;
+      }
+      return null;
+    }
+    ensureColors();
+    var newColor = nextDefaultColor(), newColorChosen = false;
 
     var CAT4 = ["กาแฟ", "ชา", "นม/โกโก้", "โซดา"];
     function cats() {
@@ -1613,6 +1759,7 @@
 
           if (Array.isArray(importedMenu) && importedMenu.length > 0) {
             MENU = importedMenu;
+            ensureColors();
             try { localStorage.setItem("cpm_menu", JSON.stringify(MENU)); } catch (err) { }
             CATS = cats();
             if (CATS.indexOf(cat) < 0) cat = "ทั้งหมด";
@@ -1639,6 +1786,7 @@
     /* ---- แก้เมนู/ราคา ---- */
     var askd = -1;
     function apply() {
+      ensureColors();
       try { localStorage.setItem("cpm_menu", JSON.stringify(MENU)); } catch (e) { }
       CATS = cats();
       if (CATS.indexOf(cat) < 0) cat = "ทั้งหมด";
@@ -1649,12 +1797,15 @@
       var h = "";
       MENU.forEach(function (m, i) {
         h += '<div class="mrow">' +
+          '<button class="cdot" data-col="' + i + '" style="background:' + (validColor(m.k) ? m.k : "#9e9e9e") + '" aria-label="เลือกสีในแผนภูมิของ ' + esc(m.n) + '"></button>' +
           '<input class="inp" data-f="n" data-i="' + i + '" value="' + esc(m.n) + '" aria-label="ชื่อเมนู">' +
           '<input class="inp" data-f="p" data-i="' + i + '" type="number" inputmode="numeric" min="0" value="' + m.p + '" aria-label="ราคา">' +
           '<button class="sm del" data-d="' + i + '">' + (askd === i ? "แตะอีกครั้งเพื่อลบ" : "ลบ") + '</button>' +
           '</div>';
       });
       $("medit").innerHTML = h;
+      if (!newColorChosen) newColor = nextDefaultColor();
+      $("acol").style.background = newColor;
     }
 
     $("medit").onchange = function (e) {
@@ -1673,6 +1824,11 @@
     $("medit").onclick = function (e) {
       var b = e.target.closest("button");
       if (!b) return;
+      if (b.dataset.col !== undefined) {
+        beep(650);
+        openColor(+b.dataset.col);
+        return;
+      }
       var i = +b.dataset.d;
       if (askd !== i) {
         askd = i;
@@ -1688,13 +1844,89 @@
     $("aadd").onclick = function () {
       var n = $("ann").value.trim(), p = parseInt($("anp").value, 10);
       if (!n || isNaN(p) || p < 0) { $("ann").focus(); return; }
-      MENU.push({ c: $("anc").value, n: n, p: p });
+      MENU.push({ c: $("anc").value, n: n, p: p, k: validColor(newColor) ? newColor : nextDefaultColor() });
+      newColorChosen = false;
       $("ann").value = "";
       $("anp").value = "";
       apply();
       drawEdit();
       beep(800);
     };
+
+    /* ---- หน้าต่างเลือกสีเมนู (64 สี) ---- */
+    var pickTarget = null, pickSel = null;
+
+    $("acol").onclick = function () {
+      beep(650);
+      openColor("new");
+    };
+
+    function openColor(target) {
+      pickTarget = target;
+      pickSel = target === "new" ? newColor : MENU[target].k;
+      if (!validColor(pickSel)) pickSel = nextDefaultColor();
+      var nm = target === "new" ? ($("ann").value.trim() || "เมนูใหม่") : MENU[target].n;
+      $("ctitle").textContent = "สีในแผนภูมิ: " + nm;
+      drawColorGrid();
+      $("colorModal").hidden = false;
+    }
+
+    function drawColorGrid() {
+      var used = {};
+      MENU.forEach(function (m, i) {
+        if (i !== pickTarget && validColor(m.k)) {
+          var key = m.k.toLowerCase();
+          if (!used[key]) used[key] = m.n;
+        }
+      });
+      var cur = (pickSel || "").toLowerCase(), h = "";
+      PALETTE.forEach(function (c) {
+        var cls = "csw" + (c.toLowerCase() === cur ? " sel" : "") + (used[c.toLowerCase()] ? " used" : "");
+        h += '<button class="' + cls + '" data-c="' + c + '" style="background:' + c + '" aria-label="สี ' + c + '"></button>';
+      });
+      $("cgrid").innerHTML = h;
+      $("cprev").style.background = pickSel;
+      var w = $("cwarn"), who = used[cur];
+      if (who) {
+        w.textContent = "สีนี้ใช้กับ \u201c" + who + "\u201d อยู่แล้ว (เลือกซ้ำได้)";
+        w.hidden = false;
+      } else {
+        w.hidden = true;
+      }
+    }
+
+    $("cgrid").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(600);
+      pickSel = b.dataset.c;
+      drawColorGrid();
+    };
+
+    function closeColor() {
+      $("colorModal").hidden = true;
+      pickTarget = null;
+    }
+
+    $("cOk").onclick = function () {
+      beep(800);
+      if (pickTarget === "new") {
+        newColor = pickSel;
+        newColorChosen = true;
+        $("acol").style.background = newColor;
+      } else if (pickTarget !== null && MENU[pickTarget]) {
+        MENU[pickTarget].k = pickSel;
+        apply();
+        var st = $("medit").scrollTop;
+        drawEdit();
+        $("medit").scrollTop = st;
+        if (!$("vr").hidden) drawReport();
+      }
+      closeColor();
+    };
+
+    $("cCancel").onclick = function () { beep(500); closeColor(); };
+    $("colorModal").onclick = function (e) { if (e.target === this) closeColor(); };
 
     /* ---- หน้าขาย & เมนู ---- */
     function chips(id, list, cur, set) {
@@ -2040,7 +2272,7 @@
 
       var t = "", g = [], acc = 0;
       names.forEach(function (k, i) {
-        var c = COL[i % COL.length],
+        var c = menuColor(k) || COL[i % COL.length],
           a = acc / list.length * 100,
           b = (acc + by[k].c) / list.length * 100;
         acc += by[k].c;
@@ -2147,7 +2379,7 @@
 
       for (var i = 0; i < n; i++) {
         var k = R.names[i], y = 830 + i * 80;
-        c.fillStyle = COL[i % COL.length];
+        c.fillStyle = menuColor(k) || COL[i % COL.length];
         rr(c, 60, y - 30, 34, 34, 8);
         c.fill();
         T(k, 115, y, 36, 600, "#1e293b");
