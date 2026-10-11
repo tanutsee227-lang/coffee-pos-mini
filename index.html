@@ -1111,6 +1111,16 @@
           aria-label="ปิด">✕</button>
       </div>
 
+      <!-- ขนาดแก้ว / ถุงกระดาษ (ค่าเริ่มต้น = แก้วเล็ก, แก้วใหญ่และถุงกระดาษ +10 บาท) -->
+      <div class="opt-group">
+        <span class="opt-group-label">ขนาด / ภาชนะ:</span>
+        <div class="opt-buttons" id="optModalSize">
+          <button class="opt-btn active" data-v="เล็ก">แก้วเล็ก<small>ราคาปกติ</small></button>
+          <button class="opt-btn" data-v="ใหญ่">แก้วใหญ่<small>+฿10</small></button>
+          <button class="opt-btn" data-v="ถุง">ถุงกระดาษ<small>+฿10</small></button>
+        </div>
+      </div>
+
       <!-- ความหวาน -->
       <div class="opt-group">
         <span class="opt-group-label">ระดับความหวาน:</span>
@@ -1346,6 +1356,49 @@
       }
       return null;
     }
+    /* ---- เมนูตามป้ายร้าน (30 บาททุกเมนู) เติมให้ครั้งเดียว ไม่ทับของเดิม ลบแล้วไม่กลับมา ---- */
+    var SIGN_SEED = [
+      { c: "กาแฟ", n: "กาแฟโบราณ", p: 30, k: "#4e342e" },
+      { c: "กาแฟ", n: "เนสกาแฟ", p: 30, k: "#8d5524" },
+      { c: "กาแฟ", n: "มอคค่าเย็น", p: 30, k: "#a1887f" },
+      { c: "นม/โกโก้", n: "โอวัลติน", p: 30, k: "#c9b79c" },
+      { c: "นม/โกโก้", n: "โกโก้", p: 30, k: "#954c18" },
+      { c: "ชา", n: "ชาเย็น", p: 30, k: "#db7024" },
+      { c: "ชา", n: "ชาดำเย็น", p: 30, k: "#b85e1e" },
+      { c: "ชา", n: "ชาเขียว", p: 30, k: "#51b81e" },
+      { c: "ชา", n: "ชามะนาว", p: 30, k: "#e7ce6a" },
+      { c: "ชา", n: "ชาเขียวมะนาว", p: 30, k: "#adec8d" },
+      { c: "กาแฟ", n: "โอเลี้ยง", p: 30, k: "#957c18" },
+      { c: "กาแฟ", n: "โอเลี้ยงยกล้อ", p: 30, k: "#95182d" },
+      { c: "นม/โกโก้", n: "เผือกหอม", p: 30, k: "#b58dec" },
+      { c: "โซดา", n: "น้ำบ๊วย", p: 30, k: "#b81e38" },
+      { c: "โซดา", n: "บ๊วย+โซดา+มะนาว", p: 30, k: "#f2e5b0" },
+      { c: "โซดา", n: "ผึ้งมะนาว", p: 30, k: "#b8991e" },
+      { c: "โซดา", n: "ผึ้ง+มะนาว+โซดา", p: 30, k: "#ecd98d" },
+      { c: "โซดา", n: "แดงโซดา", p: 30, k: "#db2442" },
+      { c: "โซดา", n: "เขียวโซดา", p: 30, k: "#24dbad" },
+      { c: "โซดา", n: "ลิ้นจี่+โซดา", p: 30, k: "#f2b0dc" },
+      { c: "โซดา", n: "เสาวรส+โซดา", p: 30, k: "#e79e6a" },
+      { c: "โซดา", n: "แอปเปิ้ล+โซดา", p: 30, k: "#7ae147" },
+      { c: "โซดา", n: "สับปะรด+โซดา", p: 30, k: "#e1c247" },
+      { c: "โซดา", n: "แคนตาลูป+โซดา", p: 30, k: "#ecb58d" },
+      { c: "โซดา", n: "สตอเบอรี่+โซดา", p: 30, k: "#e14760" }
+    ];
+    (function seedSignMenu() {
+      var KEY = "cpm_seed_sign1";
+      try { if (localStorage.getItem(KEY) === "1") return; } catch (e) { return; }
+      SIGN_SEED.forEach(function (it) {
+        var found = null;
+        for (var i = 0; i < MENU.length; i++) { if (MENU[i].n === it.n) { found = MENU[i]; break; } }
+        if (found) { found.p = it.p; found.k = it.k; }
+        else MENU.push({ c: it.c, n: it.n, p: it.p, k: it.k });
+      });
+      try {
+        localStorage.setItem("cpm_menu", JSON.stringify(MENU));
+        localStorage.setItem(KEY, "1");
+      } catch (e) { }
+    })();
+
     ensureColors();
     var newColor = nextDefaultColor(), newColorChosen = false;
 
@@ -1439,8 +1492,15 @@
           }
         };
         req.onsuccess = function (e) {
-          idb = e.target.result;
-          resolve(idb);
+          var conn = e.target.result;
+          idb = conn;
+          // ถ้าเบราว์เซอร์ปิดการเชื่อมต่อเอง (เช่น Safari พักแอปตอนอยู่เบื้องหลัง) ให้ลืมตัวเก่า เพื่อเปิดใหม่ครั้งถัดไป
+          conn.onclose = function () { if (idb === conn) idb = null; };
+          conn.onversionchange = function () {
+            try { conn.close(); } catch (er) { }
+            if (idb === conn) idb = null;
+          };
+          resolve(conn);
         };
         req.onerror = function (e) {
           reject(e.target.error || new Error("เปิดฐานข้อมูล IndexedDB ล้มเหลว"));
@@ -1456,8 +1516,18 @@
       } catch (e) { }
 
       // 2. บันทึกข้อมูลทั้งหมดลง IndexedDB
-      openDB().then(function (d) {
-        var tx = d.transaction(["orders", "meta"], "readwrite");
+      var retried = false;
+      (function run() {
+        return openDB().then(function (d) {
+        var tx;
+        try {
+          tx = d.transaction(["orders", "meta"], "readwrite");
+        } catch (err) {
+          // การเชื่อมต่อเก่าถูกปิดไปแล้ว (The database connection is closing) -> เปิดใหม่แล้วลองบันทึกซ้ำ 1 ครั้ง
+          idb = null;
+          if (!retried) { retried = true; return run(); }
+          throw err;
+        }
         var orderStore = tx.objectStore("orders");
         var metaStore = tx.objectStore("meta");
 
@@ -1471,9 +1541,10 @@
           var errDetail = e.target.error ? e.target.error.message : "พื้นที่จัดเก็บบนอุปกรณ์อาจเต็ม";
           showError("บันทึกข้อมูลไม่สำเร็จ! (" + errDetail + ")");
         };
-      }).catch(function (err) {
-        showError("บันทึกข้อมูลไม่สำเร็จ: " + (err.message || err));
-      });
+        }).catch(function (err) {
+          showError("บันทึกข้อมูลไม่สำเร็จ: " + (err.message || err));
+        });
+      })();
     }
 
     // โหลดข้อมูลเริ่มต้นและย้ายข้อมูลจาก localStorage มา IndexedDB (ทำครั้งเดียว ไม่ให้ข้อมูลสูญหาย)
@@ -1964,6 +2035,13 @@
        เมื่อแตะเมนู จะเปิด Modal ขนาดใหญ่ให้จิ้มเลือกความหวาน/ใส่นม
        ========================================================================== */
     var activeModalItem = null;
+    // ขนาด/ภาชนะ: เล็ก = ราคาปกติ, ใหญ่ และ ถุงกระดาษ = +10 บาท
+    var SIZES = {
+      "เล็ก": { label: "แก้วเล็ก", add: 0 },
+      "ใหญ่": { label: "แก้วใหญ่", add: 10 },
+      "ถุง": { label: "ถุงกระดาษ", add: 10 }
+    };
+    var modalSize = "เล็ก";
     var modalSweet = "50%";
     var modalIce = "ใส่";
     var modalMilk = "ไม่ใส่";
@@ -1988,13 +2066,13 @@
 
     function openOptModal(m) {
       activeModalItem = m;
+      modalSize = "เล็ก"; // เริ่มที่แก้วเล็กทุกครั้ง
       modalSweet = "50%"; // ค่าเริ่มต้นยอดนิยม 50% ทุกครั้ง เพื่อไม่ให้ค่าคนเก่าค้าง
       modalIce = "ใส่";
       modalMilk = (m.c === "กาแฟ" && (m.n.includes("ลาเต้") || m.n.includes("คาปูชิโน่"))) || m.c === "นม/โกโก้" ? "ใส่" : "ไม่ใส่";
 
       $("optModalName").textContent = m.n;
-      $("optModalPrice").textContent = "฿" + m.p;
-      $("optModalConfirmBtnPrice").textContent = "฿" + m.p;
+      refreshModalPrice();
       $("optModalNote").value = $("note").value.trim();
 
       // ปรับการซ่อนแสดงหมวดนม (ถ้าเป็นโซดา ไม่ต้องใส่นม)
@@ -2004,7 +2082,21 @@
       $("optModal").hidden = false;
     }
 
+    function modalPrice() {
+      return activeModalItem.p + SIZES[modalSize].add;
+    }
+
+    function refreshModalPrice() {
+      if (!activeModalItem) return;
+      $("optModalPrice").textContent = "฿" + modalPrice();
+      $("optModalConfirmBtnPrice").textContent = "฿" + modalPrice();
+    }
+
     function renderModalButtons() {
+      // ขนาด/ภาชนะ
+      document.querySelectorAll("#optModalSize .opt-btn").forEach(function (btn) {
+        btn.classList.toggle("active", btn.dataset.v === modalSize);
+      });
       // ความหวาน
       document.querySelectorAll("#optModalSweet .opt-btn").forEach(function (btn) {
         btn.classList.toggle("active", btn.dataset.v === modalSweet);
@@ -2018,6 +2110,15 @@
         btn.classList.toggle("active", btn.dataset.v === modalMilk);
       });
     }
+
+    $("optModalSize").onclick = function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      beep(650);
+      modalSize = b.dataset.v;
+      refreshModalPrice();
+      renderModalButtons();
+    };
 
     $("optModalSweet").onclick = function (e) {
       var b = e.target.closest("button");
@@ -2052,16 +2153,17 @@
       if (!activeModalItem) return;
       beep(880, 0.08);
       var noteVal = $("optModalNote").value.trim();
-      addOrder(activeModalItem.n, activeModalItem.p, modalSweet, modalIce, modalMilk, noteVal);
+      addOrder(activeModalItem.n, modalPrice(), modalSweet, modalIce, modalMilk, noteVal, modalSize);
       $("optModal").hidden = true;
       $("note").value = ""; // ล้างโน้ตหลักหลังบันทึก
     };
 
-    function addOrder(name, price, sweetness, iceChoice, milkChoice, noteText) {
+    function addOrder(name, price, sweetness, iceChoice, milkChoice, noteText, size) {
       orders.unshift({
         id: seq++,
         n: name,
         p: price,
+        sz: SIZES[size] ? size : "เล็ก",
         sw: sweetness,
         ic: iceChoice,
         ml: milkChoice,
@@ -2147,7 +2249,7 @@
           '<div class="top">' +
           '<div>' +
           '<b>#' + o.id + ' ' + o.n + '</b>' +
-          '<div class="meta">หวาน ' + o.sw + ' · ' + opt(o.ic, "น้ำแข็ง") + (o.ml ? ' · ' + opt(o.ml, "นม") : '') + (o.note ? ' · <strong style="color:var(--acc)">' + esc(o.note) + '</strong>' : '') + '</div>' +
+          '<div class="meta">หวาน ' + o.sw + ' · ' + opt(o.ic, "น้ำแข็ง") + (o.ml ? ' · ' + opt(o.ml, "นม") : '') + (o.sz && SIZES[o.sz] ? ' · ' + (SIZES[o.sz].add ? '<strong>' + SIZES[o.sz].label + '</strong>' : SIZES[o.sz].label) : '') + (o.note ? ' · <strong style="color:var(--acc)">' + esc(o.note) + '</strong>' : '') + '</div>' +
           '</div>' +
           '<div style="text-align:right">' +
           '<b class="num-font" style="font-size:22px; color:var(--acc);">฿' + o.p + '</b><br>' +
